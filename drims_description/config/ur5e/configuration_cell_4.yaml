@@ -4,11 +4,11 @@ table:
   height: 0.783
 
 robot:
-  xyz: "0.07 0.42 0.045"
+  xyz: "0.07 0.43 0.04"
   rpy: "0.0 0.0 -1.57"
 
 camera_frame:
-  xyz: "0.485 0.84 0"
+  xyz: "0.47 0.84 0.01"
   rpy: "0 0 -1.57"
 
 camera:

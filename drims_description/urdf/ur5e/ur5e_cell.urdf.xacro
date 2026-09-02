@@ -208,7 +208,7 @@
       frame_x
       frame_y
       beam
-      height
+      height 
       post_height
     ">
 
@@ -322,20 +322,46 @@
           <box size="${beam} ${beam} ${post_height}"/>
         </geometry>
         <material name="gray_transparent"/>
-        <origin xyz="${beam/2} ${beam/2+frame_y/2} ${post_height/2}" rpy="0 0 0"/>
+        <origin xyz="${beam/2} ${frame_y/2} ${post_height/2}" rpy="0 0 0"/>
       </visual>
       <collision>
         <geometry>
           <box size="${beam} ${beam} ${post_height}"/>
         </geometry>
         <material name="red_transparent"/>
-        <origin xyz="${beam/2} ${beam/2+frame_y/2} ${post_height/2}" rpy="0 0 0"/>
+        <origin xyz="${beam/2} ${frame_y/2} ${post_height/2}" rpy="0 0 0"/>
       </collision>
     </link>
 
     <joint name="${name}_post_joint" type="fixed">
       <parent link="${name}_front"/>
       <child link="${name}_post"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- ======================================================= -->
+    <!-- FLOOR -->
+    <!-- ======================================================= -->
+    <link name="${name}_floor">
+      <visual>
+        <geometry>
+          <box size="${frame_x - 2*beam} ${frame_y - 2*beam} 0.005"/>
+        </geometry>
+        <material name="gray_transparent"/>
+        <origin xyz="${frame_x/2} ${frame_y/2} 0.0025" rpy="0 0 0"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="${frame_x - 2*beam} ${frame_y - 2*beam} 0.005"/>
+        </geometry>
+        <material name="gray_transparent"/>
+        <origin xyz="${frame_x/2} ${frame_y/2} 0.0025" rpy="0 0 0"/>
+      </collision>
+    </link>
+
+    <joint name="${name}_floor_joint" type="fixed">
+      <parent link="${name}_post"/>
+      <child link="${name}_floor"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
     </joint>
 
@@ -349,14 +375,14 @@
           <box size="${frame_x} ${beam} ${beam}"/>
         </geometry>
         <material name="gray_transparent"/>
-        <origin xyz="${frame_x/2} ${beam/2+frame_y/2} ${post_height}" rpy="0 0 0"/>
+        <origin xyz="${frame_x/2} ${frame_y/2} ${post_height}" rpy="0 0 0"/>
       </visual>
       <collision>
         <geometry>
           <box size="${frame_x} ${beam} ${beam}"/>
         </geometry>
         <material name="red_transparent"/>
-        <origin xyz="${frame_x/2} ${beam/2+frame_y/2} ${post_height}" rpy="0 0 0"/>
+        <origin xyz="${frame_x/2} ${frame_y/2} ${post_height}" rpy="0 0 0"/>
       </collision>
     </link>
 
@@ -366,6 +392,34 @@
       <origin xyz="0 0 0" rpy="0 0 0"/>
     </joint>
 
+    <!-- ======================================================= -->
+    <!-- TOP-LATERAL HORIZONTAL CAMERA BAR -->
+    <!-- ======================================================= -->
+
+    <link name="${name}_top_bar_camera">
+      <visual>
+        <geometry>
+          <box size="${frame_x/2} ${beam*2} ${beam+0.025}"/>
+        </geometry>
+        <material name="gray_transparent"/>
+        <origin xyz="${frame_x/2} ${frame_y/2} ${post_height-0.025}" rpy="0 0 0"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="${frame_x/2} ${beam*2} ${beam+0.025}"/>
+        </geometry>
+        <material name="red_transparent"/>
+        <origin xyz="${frame_x/2} ${frame_y/2} ${post_height-0.025}" rpy="0 0 0"/>
+      </collision>
+    </link>
+
+    <joint name="${name}_top_bar_camera_joint" type="fixed">
+      <parent link="${name}_post"/>
+      <child link="${name}_top_bar_camera"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+
   </xacro:macro>
 
   <xacro:camera_frame
@@ -373,11 +427,11 @@
     parent="table_top"
     xyz="${camera_frame_xyz}"
     rpy="${camera_frame_rpy}"
-    frame_x="0.8"
-    frame_y="0.6"
+    frame_x="0.73"
+    frame_y="0.53"
     beam="0.05"
     height="0.7"
-    post_height="0.8"/>
+    post_height="0.67"/>
 
   <!-- ========================================================= -->
   <!-- CAMERA -->
