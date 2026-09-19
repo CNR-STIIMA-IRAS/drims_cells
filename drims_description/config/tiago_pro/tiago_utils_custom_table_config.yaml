@@ -1,0 +1,58 @@
+table_scene_publisher_node:
+  ros__parameters:
+    # Table dimensions & position (TIAGo along long side: length=1.0m, width=1.5m)
+    table_length: 0.80
+    table_width: 1.45
+    table_thickness: 0.02
+    leg_thickness: 0.05
+    leg_height: 0.71
+    table_pos_x: 0.60
+    table_pos_y: 0.0
+    table_pos_z: 0.0
+
+    # Upper camera structure removed
+    enable_camera_structure: false
+
+    # Lateral PC box (space occupied by PC)
+    enable_pc_box: false
+    pc_box_length: 0.35
+    pc_box_width: 0.45
+    pc_box_height: 0.40
+    pc_box_pos_x: 0.0
+    pc_box_pos_y: 0.50
+    pc_box_pos_z: 0.225
+
+    # Safety virtual barriers (semi-transparent yellow walls enclosing table volume)
+    enable_safety_barriers: true
+    barrier_thickness: 0.01
+    barrier_height: 0.80
+    barrier_alpha: 0.05 # 0.3
+    barrier_side_length: 1.40   # Length of side walls (1 & 2, running along X)
+    barrier_end_length: 1.47    # Length of end walls (3 & 4, running along Y)
+    enable_barrier_side_pos_y: true  # Wall 1: +Y side
+    enable_barrier_side_neg_y: true  # Wall 2: -Y side
+    enable_barrier_end_pos_x: true   # Wall 3: +X front end (orthogonal)
+    enable_barrier_end_neg_x: true   # Wall 4: -X robot side end (orthogonal)
+
+    # Individual virtual barrier min corner positions (min_x, min_y, min_z wrt base_footprint)
+    barrier_1_pos_x: -0.50        # Wall 1 (+Y side) min corner X
+    barrier_1_pos_y: 0.645       # Wall 1 (+Y side) min corner Y
+    barrier_1_pos_z: 0.73        # Wall 1 (+Y side) min corner Z
+
+    barrier_2_pos_x: -0.50        # Wall 2 (-Y side) min corner X
+    barrier_2_pos_y: -0.645      # Wall 2 (-Y side) min corner Y
+    barrier_2_pos_z: 0.73        # Wall 2 (-Y side) min corner Z
+
+    barrier_3_pos_x: 0.90        # Wall 3 (+X front end) min corner X
+    barrier_3_pos_y: -0.745      # Wall 3 (+X front end) min corner Y
+    barrier_3_pos_z: 0.73        # Wall 3 (+X front end) min corner Z
+
+    barrier_4_pos_x: -0.50        # Wall 4 (-X robot side end) min corner X
+    barrier_4_pos_y: -0.745      # Wall 4 (-X robot side end) min corner Y
+    barrier_4_pos_z: 0.73        # Wall 4 (-X robot side end) min corner Z
+
+
+
+static_tip_frame_publisher_node:
+  ros__parameters:
+    tip_z: 0.15

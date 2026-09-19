@@ -11,7 +11,10 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 
 class GripperBridge(Node):
     def __init__(self):
-        super().__init__('tiago_right_gripper_node')
+        super().__init__('tiago_gripper_bridge_node')
+
+        # Declare parameter for selecting gripper side ('right' or 'left', default: 'right')
+        self.declare_parameter('gripper_side', 'right')
 
         # Action server exposed to clients
         self._action_server = ActionServer(
@@ -23,8 +26,14 @@ class GripperBridge(Node):
             cancel_callback=self.cancel_callback
         )
 
-        # Action client to the real gripper
-        self._gripper_client = ActionClient(
+        # Action clients for BOTH grippers
+        self._right_gripper_client = ActionClient(
+            self,
+            FollowJointTrajectory,
+            '/gripper_right_controller/follow_joint_trajectory'
+        )
+
+        self._left_gripper_client = ActionClient(
             self,
             FollowJointTrajectory,
             '/gripper_left_controller/follow_joint_trajectory'
@@ -41,15 +50,28 @@ class GripperBridge(Node):
     async def execute_callback(self, goal_handle):
         self.get_logger().info('Executing goal...')
 
+        # Select target gripper based on parameter
+        gripper_side = self.get_parameter('gripper_side').get_parameter_value().string_value.lower()
+        if gripper_side == 'left':
+            target_client = self._left_gripper_client
+            joint_name = 'gripper_left_finger_joint'
+            side_name = 'LEFT'
+        else:
+            target_client = self._right_gripper_client
+            joint_name = 'gripper_right_finger_joint'
+            side_name = 'RIGHT'
+
+        self.get_logger().info(f'Selected {side_name} gripper controller for command.')
+
         # Wait for the remote action server to be available
-        if not self._gripper_client.wait_for_server(timeout_sec=2.0):
-            self.get_logger().error('Gripper action server not available!')
+        if not target_client.wait_for_server(timeout_sec=2.0):
+            self.get_logger().error(f'{side_name} Gripper action server not available!')
             goal_handle.abort()
             return GripperCommand.Result(position=0.0, effort=0.0, stalled=False, reached_goal=False)
 
         # Convert GripperCommand to FollowJointTrajectory
         goal_msg = FollowJointTrajectory.Goal()
-        goal_msg.trajectory.joint_names = ['gripper_left_finger_joint']
+        goal_msg.trajectory.joint_names = [joint_name]
 
         point = JointTrajectoryPoint()
         point.positions = [goal_handle.request.command.position]
@@ -58,12 +80,12 @@ class GripperBridge(Node):
         goal_msg.trajectory.points = [point]
 
         # Send goal to the underlying FollowJointTrajectory action server
-        self.get_logger().info(f'Sending to FollowJointTrajectory: {point.positions[0]:.3f}')
-        send_goal_future = self._gripper_client.send_goal_async(goal_msg)
+        self.get_logger().info(f'Sending {side_name} gripper command to FollowJointTrajectory: {point.positions[0]:.3f}')
+        send_goal_future = target_client.send_goal_async(goal_msg)
         goal_response = await send_goal_future
 
         if not goal_response.accepted:
-            self.get_logger().error('Goal rejected by FollowJointTrajectory')
+            self.get_logger().error(f'Goal rejected by {side_name} FollowJointTrajectory')
             goal_handle.abort()
             return GripperCommand.Result(position=0.0, effort=0.0, stalled=False, reached_goal=False)
 
@@ -71,15 +93,18 @@ class GripperBridge(Node):
         result_future = goal_response.get_result_async()
         result = await result_future
 
-        # At this point you could extract more detailed info from result
-        # and fill GripperCommand.Result more precisely if needed
-        self.get_logger().info('Goal completed successfully.')
+        # If goal aborted or failed because gripper stalled against object, report succeeded with stalled=True
+        is_stalled = (result.status != 4)  # GoalStatus.STATUS_SUCCEEDED is 4
+        if is_stalled:
+            self.get_logger().info(f'{side_name} Gripper contact detected / stalled on object (action status={result.status}). Succeeding GripperCommand.')
+
+        self.get_logger().info(f'{side_name} Gripper goal finished successfully.')
         goal_handle.succeed()
 
         return GripperCommand.Result(
             position=goal_handle.request.command.position,
             effort=goal_handle.request.command.max_effort,
-            stalled=False,
+            stalled=is_stalled,
             reached_goal=True
         )
 

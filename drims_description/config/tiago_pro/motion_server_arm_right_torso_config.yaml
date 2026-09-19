@@ -1,17 +1,10 @@
 /**:
   ros__parameters:
-    move_group_name: "both_arms_torso"
+    move_group_name: "arm_right_torso"
     end_effector_name: "gripper_right_base_link"
     base_link_name: "base_link"
     joint_names:
       - 'torso_lift_joint'
-      - 'arm_left_1_joint'
-      - 'arm_left_2_joint'
-      - 'arm_left_3_joint'
-      - 'arm_left_4_joint'
-      - 'arm_left_5_joint'
-      - 'arm_left_6_joint'
-      - 'arm_left_7_joint'
       - 'arm_right_1_joint'
       - 'arm_right_2_joint'
       - 'arm_right_3_joint'
@@ -31,4 +24,3 @@
     virtual_end_effector: "tip"
     ik_timeout: 5
     max_ik_retries: 2
-

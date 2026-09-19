@@ -35,7 +35,7 @@ motion_server_node:
     cartesian_avoid_collisions: true
 
     # Velocity and acceleration scaling factors
-    max_velocity: 0.5
-    max_acceleration: 0.5
+    max_velocity: 1.0
+    max_acceleration: 1.0
 
     planner_id: RRTConnect

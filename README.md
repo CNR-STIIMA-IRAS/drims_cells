@@ -14,7 +14,7 @@ ros2 launch drims_description ur5e_1_start.launch.py fake:=true
 
 For the Tiago Pro robot:
 ```bash
-ros2 launch drims2_description tiago_pro_start.launch.py fake:=true
+ros2 launch drims_description tiago_pro_start.launch.py fake:=true
 ```
 
 > ⚠️  Use `fake:=true` to run in simulation mode, and `fake:=false` to connect to the real hardware.

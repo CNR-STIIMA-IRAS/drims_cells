@@ -4,11 +4,42 @@ table_scene_publisher_node:
     table_width: 1.0
     table_thickness: 0.05
     leg_thickness: 0.05
-    leg_height: 0.74
-    table_pos_x: 1.1
+    leg_height: 0.50
+    table_pos_x: 1.10
     table_pos_y: 0.0
     table_pos_z: 0.0
+    enable_camera_structure: false
+    enable_pc_box: false
+
+    # Safety virtual barriers (semi-transparent yellow walls enclosing table volume)
+    enable_safety_barriers: true
+    barrier_thickness: 0.02
+    barrier_height: 0.80
+    barrier_alpha: 0.3
+    enable_barrier_side_pos_y: true
+    enable_barrier_side_neg_y: true
+    enable_barrier_end_pos_x: true
+    enable_barrier_end_neg_x: true
+
+    # Individual virtual barrier min corner positions (min_x, min_y, min_z wrt base_footprint)
+    barrier_1_pos_x: 0.35
+    barrier_1_pos_y: 0.50
+    barrier_1_pos_z: 0.55
+
+    barrier_2_pos_x: 0.35
+    barrier_2_pos_y: -0.52
+    barrier_2_pos_z: 0.55
+
+    barrier_3_pos_x: 1.85
+    barrier_3_pos_y: -0.52
+    barrier_3_pos_z: 0.55
+
+    barrier_4_pos_x: 0.33
+    barrier_4_pos_y: -0.52
+    barrier_4_pos_z: 0.55
+
 
 static_tip_frame_publisher_node:
   ros__parameters:
     tip_z: 0.15
+

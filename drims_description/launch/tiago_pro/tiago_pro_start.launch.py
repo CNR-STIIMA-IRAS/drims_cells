@@ -1,23 +1,48 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, ExecuteProcess
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 import os
-from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
-from launch_ros.substitutions import FindPackageShare
-from launch.actions import OpaqueFunction, IncludeLaunchDescription, DeclareLaunchArgument, TimerAction, ExecuteProcess
+
 
 def generate_launch_description():
-    # Declare the 'fake' launch argument (default is false)
+    # Declare the 'fake' launch argument (default is true)
     fake_arg = DeclareLaunchArgument(
         'fake',
         default_value='true',
         description='If true, launches the Tiago Gazebo simulation'
     )
-    calib_args =[]
+    gazebo_arg = DeclareLaunchArgument(
+        'gazebo',
+        default_value='true',
+        description='If false, kills the bridge_ros_gz process'
+    )
+    tuck_arm_arg = DeclareLaunchArgument(
+        'tuck_arm',
+        default_value='True',
+        description='If True, runs the tuck_arm node at startup'
+    )
+    tuck_arm_motion_arg = DeclareLaunchArgument(
+        'tuck_arm_motion',
+        default_value='custom_home',
+        description='Motion name to tuck the arm to (default: custom_home)'
+    )
+    table_config_file_arg = DeclareLaunchArgument(
+        'table_config_file',
+        default_value='tiago_utils_config.yaml',
+        description='Table YAML config filename in drims_description/config/tiago_pro/'
+    )
+    safety_scaling_arg = DeclareLaunchArgument(
+        'safety_scaling',
+        default_value='1.0',
+        description='Global safety velocity scaling factor (e.g. 0.2) applied on top of each motion server\'s planned trajectory, without altering their YAML max_velocity/max_acceleration'
+    )
+
+    calib_args = []
     calib_args.append(DeclareLaunchArgument(name="frame_id",              default_value="base_footprint",  description="Base link of the robot respect to the checkerboard is referred"))
     calib_args.append(DeclareLaunchArgument(name="checkerboard_frame_id", default_value="checkerboard", description="Checkerboard frame id name"))
     calib_args.append(DeclareLaunchArgument(name="checkerboar_x",         default_value="0.639",     description="Checkerboar x"))
@@ -29,6 +54,7 @@ def generate_launch_description():
     calib_args.append(DeclareLaunchArgument(name="checkerboard_qw",       default_value="0.0",        description="Checkerboar qw"))  
 
     fake = LaunchConfiguration('fake')
+    gazebo = LaunchConfiguration('gazebo')
 
     # Include the tiago_pro_gazebo launch file only if fake == true
     tiago_launch = IncludeLaunchDescription(
@@ -41,21 +67,32 @@ def generate_launch_description():
         ),
         launch_arguments={'is_public_sim': 'True',
                           'world_name': 'empty',
-                          'gazebo_version' : 'gazebo',
-                          'gzclient' : 'False',
-                          'tuck_arm': 'True'}.items(),
+                          'gazebo_version': 'gazebo',
+                          'gzclient': 'False',
+                          'tuck_arm': LaunchConfiguration('tuck_arm'),
+                          'tuck_arm_motion': LaunchConfiguration('tuck_arm_motion')}.items(),
         condition=IfCondition(fake)
     )
 
-    # Load the parameter YAML file for the table_scene_publisher_node
-    param_file = os.path.join(
-        get_package_share_directory('drims_description'),
-        'config',
-        'tiago_pro',
-        'tiago_utils_config.yaml'
+    kill_gz_bridge = ExecuteProcess(
+        cmd=['pkill', '-f', 'bridge_ros_gz'],
+        output='screen',
+        condition=UnlessCondition(gazebo)
     )
 
-    # Define the table_scene_publisher_node with parameters
+    table_config_file_raw = LaunchConfiguration('table_config_file')
+    table_config_file = PythonExpression([
+        "'", table_config_file_raw, "' if '", table_config_file_raw, "'.endswith(('.yaml', '.yml')) else '", table_config_file_raw, ".yaml'"
+    ])
+
+    param_file = PathJoinSubstitution([
+        FindPackageShare('drims_description'),
+        'config',
+        'tiago_pro',
+        table_config_file
+    ])
+
+
     table_scene_node = Node(
         package='tiago_pro_setup_utils',
         executable='table_scene_publisher_node',
@@ -64,7 +101,6 @@ def generate_launch_description():
         parameters=[param_file]
     )
 
-    # Tf tip frame publisher node
     static_tip_frame_publisher_node = Node(
         package='tiago_pro_setup_utils',
         executable='static_tip_frame_publisher_node',
@@ -84,45 +120,44 @@ def generate_launch_description():
 
     motion_server_path = PathJoinSubstitution([FindPackageShare("drims_description"), "launch", "tiago_pro", "tiago_pro_motion_server.launch.py"])
     motion_server_launch = IncludeLaunchDescription(
-        launch_description_source = PythonLaunchDescriptionSource(motion_server_path),
-        launch_arguments={'use_sim_time': fake}.items()
+        launch_description_source=PythonLaunchDescriptionSource(motion_server_path),
+        launch_arguments={'use_sim_time': fake, 'safety_scaling': LaunchConfiguration('safety_scaling')}.items()
     )
 
-    # tiago_pro_gripper_controller_path = PathJoinSubstitution([FindPackageShare("drims_description"), "launch", "tiago_pro", "tiago_pro_gripper_controller.launch.py"])
-    # tiago_pro_gripper_controller_launch = IncludeLaunchDescription(
-    #     launch_description_source = PythonLaunchDescriptionSource(tiago_pro_gripper_controller_path),
-    #     launch_arguments={'use_sim_time': fake}.items()
-    # )
+    rviz_config_arg = DeclareLaunchArgument(
+        'rviz_config',
+        default_value='moveit.rviz',
+        description='RViz configuration file name (default: moveit.rviz)'
+    )
 
     tiago_pro_rviz_path = PathJoinSubstitution([FindPackageShare("tiago_pro_moveit_config"), "launch", "moveit_rviz.launch.py"])
     # Simulation variant
     tiago_pro_rviz_sim_launch = IncludeLaunchDescription(
         launch_description_source=PythonLaunchDescriptionSource(tiago_pro_rviz_path),
-        launch_arguments={'use_sim_time': 'True'}.items(),
+        launch_arguments={'use_sim_time': 'True', 'rviz_config': LaunchConfiguration('rviz_config')}.items(),
         condition=IfCondition(fake)
     )
     # Real robot variant
     tiago_pro_rviz_real_launch = IncludeLaunchDescription(
         launch_description_source=PythonLaunchDescriptionSource(tiago_pro_rviz_path),
-        launch_arguments={'use_sim_time': 'False'}.items(),
+        launch_arguments={'use_sim_time': 'False', 'rviz_config': LaunchConfiguration('rviz_config')}.items(),
         condition=UnlessCondition(fake)
     )
 
-    #calibration launch
+    # calibration launch
     camera_calibration_path = PathJoinSubstitution([FindPackageShare("drims_description"), "launch", "tiago_pro", "tiago_pro_camera_calibration.launch.py"])
     camera_calibration_launch = IncludeLaunchDescription(
-        launch_description_source = PythonLaunchDescriptionSource(camera_calibration_path),
-        launch_arguments = [('frame_id',       LaunchConfiguration("frame_id")),
-                            ('child_frame_id', LaunchConfiguration("checkerboard_frame_id")),
-                            ('x',              LaunchConfiguration("checkerboar_x")),
-                            ('y',              LaunchConfiguration("checkerboar_y")),
-                            ('z',              LaunchConfiguration("checkerboar_z")),
-                            ('qx',             LaunchConfiguration("checkerboard_qx")),
-                            ('qy',             LaunchConfiguration("checkerboard_qy")),
-                            ('qz',             LaunchConfiguration("checkerboard_qz")),
-                            ('qw',             LaunchConfiguration("checkerboard_qw"))] 
+        launch_description_source=PythonLaunchDescriptionSource(camera_calibration_path),
+        launch_arguments=[('frame_id',       LaunchConfiguration("frame_id")),
+                          ('child_frame_id', LaunchConfiguration("checkerboard_frame_id")),
+                          ('x',              LaunchConfiguration("checkerboar_x")),
+                          ('y',              LaunchConfiguration("checkerboar_y")),
+                          ('z',              LaunchConfiguration("checkerboar_z")),
+                          ('qx',             LaunchConfiguration("checkerboard_qx")),
+                          ('qy',             LaunchConfiguration("checkerboard_qy")),
+                          ('qz',             LaunchConfiguration("checkerboard_qz")),
+                          ('qw',             LaunchConfiguration("checkerboard_qw"))] 
     )
-
 
     delayed_control_server = TimerAction(
         period=2.0,
@@ -141,7 +176,6 @@ def generate_launch_description():
         actions=[kill_gzclient]
     )
 
-    # Set param to move_group ompl longest_valid_segment_fraction node
     gripper_node = Node(
         package='tiago_pro_setup_utils',
         executable='tiago_gripper_node',
@@ -150,11 +184,18 @@ def generate_launch_description():
         parameters=[]
     )
 
-    # Launch description including conditional Tiago launch and the table scene node
+    # Launch description including conditional Tiago launch
     return LaunchDescription([
         fake_arg,
+        gazebo_arg,
+        tuck_arm_arg,
+        tuck_arm_motion_arg,
+        table_config_file_arg,
+        safety_scaling_arg,
+        rviz_config_arg,
         *calib_args,
         tiago_launch,
+        kill_gz_bridge,
         table_scene_node,
         static_tip_frame_publisher_node,
         set_param_once_node,
@@ -163,5 +204,6 @@ def generate_launch_description():
         camera_calibration_launch,
         delayed_control_server,
         gripper_node
-        # tiago_pro_gripper_controller_launch,
     ])
+
+
