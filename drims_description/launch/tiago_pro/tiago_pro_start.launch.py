@@ -33,12 +33,12 @@ def generate_launch_description():
     )
     table_config_file_arg = DeclareLaunchArgument(
         'table_config_file',
-        default_value='tiago_utils_config.yaml',
+        default_value='tiago_utils_custom_table_config.yaml',
         description='Table YAML config filename in drims_description/config/tiago_pro/'
     )
     safety_scaling_arg = DeclareLaunchArgument(
         'safety_scaling',
-        default_value='1.0',
+        default_value='0.2',
         description='Global safety velocity scaling factor (e.g. 0.2) applied on top of each motion server\'s planned trajectory, without altering their YAML max_velocity/max_acceleration'
     )
 
@@ -126,7 +126,7 @@ def generate_launch_description():
 
     rviz_config_arg = DeclareLaunchArgument(
         'rviz_config',
-        default_value='moveit.rviz',
+        default_value='moveit_drims_cell.rviz',
         description='RViz configuration file name (default: moveit.rviz)'
     )
 
@@ -203,7 +203,7 @@ def generate_launch_description():
         tiago_pro_rviz_real_launch,
         camera_calibration_launch,
         delayed_control_server,
-        gripper_node
+        # gripper_node
     ])
 
 

@@ -3,7 +3,7 @@ table_scene_publisher_node:
     # Table dimensions & position (TIAGo along long side: length=1.0m, width=1.5m)
     table_length: 0.80
     table_width: 1.45
-    table_thickness: 0.02
+    table_thickness: 0.025
     leg_thickness: 0.05
     leg_height: 0.71
     table_pos_x: 0.60
@@ -23,7 +23,7 @@ table_scene_publisher_node:
     pc_box_pos_z: 0.225
 
     # Safety virtual barriers (semi-transparent yellow walls enclosing table volume)
-    enable_safety_barriers: true
+    enable_safety_barriers: false
     barrier_thickness: 0.01
     barrier_height: 0.80
     barrier_alpha: 0.05 # 0.3
@@ -55,4 +55,4 @@ table_scene_publisher_node:
 
 static_tip_frame_publisher_node:
   ros__parameters:
-    tip_z: 0.15
+    tip_z: 0.18

@@ -46,7 +46,7 @@ class SetControllerParamsOnce(Node):
             ("state_interfaces",             pv_string_array(["position"])),
             ("max_effort",                   pv_double(10.0)),
             ("goal_tolerance",               pv_double(0.01)),
-            ("allow_stalling",               pv_bool(False)),
+            ("allow_stalling",               pv_bool(True)),
             ("stall_velocity_threshold",     pv_double(0.001)),
             ("stall_timeout",                pv_double(1.0)),
             ("action_monitor_rate",          pv_double(20.0)),

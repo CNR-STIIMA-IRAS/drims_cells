@@ -13,7 +13,8 @@ def generate_launch_description():
         package='controller_manager',
         executable='spawner',
         output='screen',
-        arguments=[ctrl_new, '--controller-manager', cm, '--load-only'],
+        arguments=[ctrl_new, '--controller-manager', cm, '--load-only',
+                   '-t', 'position_controllers/GripperActionController'],
     )
 
     # 2) Run your ROS node that sets ALL parameters atomically for /gripper_action_controller
@@ -28,8 +29,9 @@ def generate_launch_description():
 
     # 3) Set the new controller to "inactive" (configured but not active yet)
     set_inactive = ExecuteProcess(
-        cmd=['ros2', 'control', 'set_controller_state', ctrl_new, 'inactive',
-             '--controller-manager', cm],
+        # cmd=['ros2', 'control', 'set_controller_state', ctrl_new, 'inactive',
+        #      '--controller-manager', cm],
+        cmd=['ros2', 'service', 'call', '/controller_manager/configure_controller', 'controller_manager_msgs/srv/ConfigureController', f'name: \'{ctrl_new}\''],
         output='screen'
     )
 

@@ -1,8 +1,11 @@
 table_scene_publisher_node:
   ros__parameters:
-    table_length: 1.5
-    table_width: 1.0
-    table_thickness: 0.05
+#    table_length: 1.5
+#    table_width: 1.0
+#    table_thickness: 0.05
+    table_length: 0.80
+    table_width: 1.45
+    table_thickness: 0.0
     leg_thickness: 0.05
     leg_height: 0.50
     table_pos_x: 1.10
